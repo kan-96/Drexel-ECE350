@@ -1,0 +1,65 @@
+CHIP CLA4_v1 {
+    IN A[4], B[4], Cin;
+    OUT S[4], Cout[4]; // Sum bits and carry-out bits
+
+    PARTS:
+    // Generate and Propagate signals for each stage
+    // Stage 0
+    And(a=A[0], b=B[0], out=G0);
+    Or(a=A[0], b=B[0], out=P0);
+
+    // Stage 1
+    And(a=A[1], b=B[1], out=G1);
+    Or(a=A[1], b=B[1], out=P1);
+
+    // Stage 2
+    And(a=A[2], b=B[2], out=G2);
+    Or(a=A[2], b=B[2], out=P2);
+
+    // Stage 3
+    And(a=A[3], b=B[3], out=G3);
+    Or(a=A[3], b=B[3], out=P3);
+
+    // Carry calculation using generate and propagate signals
+    // Carry-out Stage 0
+    Or(a=Cin, b=P0, out=C0);
+
+    // Carry-out Stage 1
+    And(a=G0, b=P1, out=Temp1);
+    Or(a=Temp1, b=P1, out=Temp2);
+    Or(a=Cin, b=Temp2, out=C1);
+
+    // Carry-out Stage 2
+    And(a=Temp1, b=P2, out=Temp3);
+    And(a=G0, b=P2, out=Temp4);
+    And(a=G1, b=P2, out=Temp5);
+    Or(a=Temp3, b=Temp4, out=Temp6);
+    Or(a=Temp6, b=Temp5, out=Temp7);
+    Or(a=Cin, b=Temp7, out=C2);
+
+    // Carry-out Stage 3
+    And(a=Temp3, b=P3, out=Temp8);
+    And(a=Temp4, b=P3, out=Temp9);
+    And(a=Temp5, b=P3, out=Temp10);
+    And(a=G0, b=P3, out=Temp11);
+    And(a=G1, b=P3, out=Temp12);
+    And(a=G2, b=P3, out=Temp13);
+    Or(a=Temp8, b=Temp9, out=Temp14);
+    Or(a=Temp14, b=Temp10, out=Temp15);
+    Or(a=Temp15, b=Temp11, out=Temp16);
+    Or(a=Temp16, b=Temp12, out=Temp17);
+    Or(a=Temp17, b=Temp13, out=Temp18);
+    Or(a=Cin, b=Temp18, out=C3);
+
+    // Full Adder stages using carry bits
+    FullAdder(a=A[0], b=B[0], c=Cin, sum=S[0], carry=DummyOut0);
+    FullAdder(a=A[1], b=B[1], c=C0, sum=S[1], carry=DummyOut1);
+    FullAdder(a=A[2], b=B[2], c=C1, sum=S[2], carry=DummyOut2);
+    FullAdder(a=A[3], b=B[3], c=C2, sum=S[3], carry=DummyOut3);
+
+    // Assign the carry-out bits to dummy wires (not used)
+    DummyOut0 = C0;
+    DummyOut1 = C1;
+    DummyOut2 = C2;
+    DummyOut3 = C3;
+}

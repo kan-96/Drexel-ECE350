@@ -1,0 +1,11 @@
+
+CHIP PFA {
+    IN a, b, c;    // 1-bit inputs
+    OUT sum;    // sum
+       
+    PARTS:
+    
+    Xor(a=a, b=b, out=cab);
+    Xor(a=cab, b=c, out = sum);
+
+}
