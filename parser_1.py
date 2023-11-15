@@ -128,12 +128,14 @@ def parse(command):
                 s['comp'] = ''
                 s['jmp'] = ''
             elif value[1].isalpha():
-                if value.isalnum() or value in '_.$:':
-                    s['value'] = value
-                    s['value_type'] = 'SYMBOL'
-                    s['dest'] = 'null'
-                    s['comp'] = ''
-                    s['jmp'] = 'null'
+                if (value.isalnum() or value in '_.$:') and all(char.islower() for char in value):
+                        s['value'] = value
+                        s['value_type'] = 'SYMBOL'
+                        s['dest'] = 'null'
+                        s['comp'] = ''
+                        s['jmp'] = 'null'
+                else:
+                    s['status'] = -1
             else:
                 s['status'] = -1
         else:
@@ -160,7 +162,7 @@ def parse(command):
             s['status'] = -1
     elif is_l_command(command):
         s['instruction_type'] = 'L'
-        if command.startswith('(') and command.endswith(')'):
+        if command.startswith('(') and command.endswith(')') and all(char.isupper() for char in command[1:-1]):
             label = command[1:-1].strip()  # Extract the label name
             s['value'] = label
         else:
@@ -179,20 +181,11 @@ def parse(command):
 
 
 def add_entry(symbol, address):
-        valid_symbol_table[symbol] = address
-        
-def contains(self, symbol):
-    return symbol in valid_symbol_table
-        
-def get_address(symbol):
-    if symbol not in valid_symbol_table:
-        return symbol
+    if symbol in valid_symbol_table:
+        return
     else:
-        return valid_symbol_table[symbol]
-
-def gen_a(addr):
-   return '0' + bits(addr).zfill(15)
-
+        valid_symbol_table[symbol]= address
+        
 def dest( d):
     return (valid_dest_patterns[d])
 
@@ -237,29 +230,58 @@ def run_assembler(file_name):
     with open(file_name, 'r') as f:
         for command in f:  
             cmd_1 = parse(command)
+            out_l = ''
             if cmd_1['instruction_type'] == 'A':
-                out_l = gen_a(get_address(cmd_1['value']))
-                machine_code.append(out_l + '\n')
+                if cmd_1['value_type'] == 'SYMBOL':
+                    if cmd_1['value_type'] in valid_symbol_table:
+                        var_addr = valid_symbol_table[cmd_1['value']]
+                        out_l = out_l + format(var_addr, 'b').zfill(15)
+                    else:
+                        valid_symbol_table[cmd_1['value']] = ram_addr
+                        out_l = out_l + format(ram_addr,'b').zfill(15)
+                        ram_addr += 1
+                machine_code.append('0'+ out_l + '\n')
             elif cmd_1['instruction_type'] == 'C':
                 out_l = dest(cmd_1['dest']) + comp(cmd_1['comp']) + jump(cmd_1['jmp'])
                 machine_code.append('111'+ out_l + '\n')
             elif cmd_1['instruction_type'] == 'L':
-                out_line = 1
+                pass
 
     
     return machine_code
 
+# This function is designed for testing purposes
 def testing (command):
     machine_code =[]
     cmd_1 = parse(command)
+    out_l = ''
+    ram_addr = 1024
+    cur_addr = 124
+    if cmd_1['instruction_type'] == 'C' or cmd_1['instruction_type'] == 'A':
+        cur_addr +=1 
+    else:
+        add_entry(cmd_1['value'],cur_addr)
+        print(valid_symbol_table[cmd_1['value']])
+    
     if cmd_1['instruction_type'] == 'A':
-        out_l = gen_a(get_address(cmd_1['value']))
-        machine_code.append(out_l + '\n')
+        out_l = '0'
+        if cmd_1['value_type'] == 'SYMBOL':
+            if cmd_1['value_type'] in valid_symbol_table:
+                var_addr = valid_symbol_table[cmd_1['value']]
+                out_l = out_l + format(var_addr, 'b').zfill(15)
+            else:
+                valid_symbol_table[cmd_1['value']] = ram_addr
+                out_l = out_l + format(ram_addr,'b').zfill(15)
+                ram_addr += 1
+            machine_code.append(out_l + '\n')
     elif cmd_1['instruction_type'] == 'C':
-        out_l = dest(cmd_1['dest']) + comp(cmd_1['comp']) + jump(cmd_1['jmp'])
-        machine_code.append('111'+ out_l + '\n')
+        out_l = '111'
+        out_l = out_l + dest(cmd_1['dest']) + comp(cmd_1['comp']) + jump(cmd_1['jmp'])
+        machine_code.append(out_l + '\n')
     print(machine_code)
     return
+
+
 # Examples
 command1 = "@100"
 parsed1 = parse(command1)
@@ -270,6 +292,12 @@ testing(command1)
 command2 = "@sum"
 parsed2 = parse(command2)
 print(parsed2)
+testing(command2)
+print(bits('1024'))
+
+command2_1 = "@sUm"
+parsed2_1 = parse(command2_1)
+print(parsed2_1)
 
 command3 = "Dw = D +w M"
 parsed3 = parse(command3)
@@ -283,7 +311,19 @@ testing(instruction4)
 instruction5 = "(SP)"
 parsed5 = parse(instruction5)
 print(parsed5)
+testing(instruction5)
+
+instruction5_1 = "(SPa)"
+parsed5_1 = parse(instruction5_1)
+print(parsed5_1)
 # testing(instruction5)
+
+instruction5_3 = "(ABC)"
+parsed5_3 = parse(instruction5_3)
+print(parsed5_3)
+testing(instruction5_3)
+
+
 
 command6 = "1@sum"
 parsed6 = parse(command6)
