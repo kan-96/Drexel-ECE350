@@ -11,6 +11,7 @@ Date modified: 11/10/2023
 
 import os
 import sys
+import re
 
 """The comp field is a c1 c2 c3 c4 c5 c6"""
 valid_comp_patterns = {'0':'0101010', 
@@ -67,7 +68,7 @@ valid_jmp_patterns =  {'null':'000',
                        }
 
 """Symbol table populated with predefined symbols and RAM locations"""
-symbol_table = {'SP':0,
+valid_symbol_table = {'SP':0,
                 'LCL':1,
                 'ARG':2,
                 'THIS':3,
@@ -114,6 +115,24 @@ def valid_tokens(s):
     
     return True
 
+def remove_whitespace(command):
+    """Remove all whitespace from a given command."""
+    return command.replace(" ", "")
+
+def remove_last_char_if_newline(s):
+    # Using rstrip to remove trailing whitespace, including newline characters
+    return s.rstrip('\n')
+
+def remove_comments(line):
+    # Split the line based on '//', take the first part
+    return line.split('//')[0]
+
+def is_valid_symbol(symbol):
+    # Define a regular expression pattern for a valid symbol
+    pattern = re.compile(r'^[a-zA-Z_.$:][a-zA-Z0-9_.$:]*$')
+
+    # Check if the symbol matches the pattern
+    return bool(pattern.match(symbol))
 
 def parse(command):
     """Implements finite automate to scan assembly statements and parse them.
@@ -147,6 +166,9 @@ def parse(command):
     
     
     command = remove_whitespace(command)
+    command = remove_last_char_if_newline(command)
+    command = remove_comments(command)
+    
     is_l_command = lambda i : i.find('(') != -1 and i.find(')') != -1    
     is_a_command = lambda i : i.find('@') != -1   
     is_c_command = lambda i : i.find("(") == -1 and i.find("@") == -1
@@ -161,12 +183,13 @@ def parse(command):
                 s['comp'] = ''
                 s['jmp'] = ''
             else:
-                s['value'] = value
-                s['value_type'] = 'SYMBOL'
-                s['dest'] = 'null'
-                s['comp'] = ''
-                s['jmp'] = 'null'
-                if s['value'] not in valid_symbol_table:
+                if is_valid_symbol(value):
+                    s['value'] = value
+                    s['value_type'] = 'SYMBOL'
+                    s['dest'] = 'null'
+                    s['comp'] = ''
+                    s['jmp'] = 'null'
+                else:
                     s['status'] = -1
         else:
             s['status'] = -1
@@ -198,9 +221,19 @@ def parse(command):
         else:
             s['status'] = -1
     else:
-        s['status'] = -1
-
-    return s  
+        if command.startswidth('//') or command == '\n' or command == '':
+            pass
+        else:
+            s['status'] = -1
+    
+    if s['status'] == -1:
+        s['instruction_type'] = ''
+        s['value'] = ''
+        s['value_type'] = ''
+        s['dest'] = ''
+        s['comp'] = ''
+        s['jmp'] = ''
+    return s
    
 def generate_machine_code():
     """Generate machine code from intermediate data structure"""
@@ -219,6 +252,30 @@ def print_machine_code(machine_code):
         rom_address = rom_address + 1
 
 
+def add_entry(symbol, address):
+        valid_symbol_table[symbol] = address
+        
+def get_address(symbol):
+    if symbol not in valid_symbol_table:
+        return symbol
+    else:
+        return valid_symbol_table[symbol]
+
+def gen_a(addr):
+   return '0' + bits(addr).zfill(15)
+
+def dest( d):
+    return (valid_dest_patterns[d])
+
+def comp( c):
+   return valid_comp_patterns[c]
+
+def jump( j):
+    return (valid_jmp_patterns[j])
+
+def bits( n):
+        return bin(int(n))[2:]
+
 def run_assembler(file_name):      
     """Pass 1: Parse the assembly code into an intermediate data structure.
     The intermediate data structure can be a list of elements, called ir, where 
@@ -234,16 +291,44 @@ def run_assembler(file_name):
     
     The symbol table is also generated in this step.    
     """
-    
+    cur_addr = 0
+    ram_addr = 1024
     # FIXME: Implement Pass 1 of the assembler to generate the intermediate data structure
+    # First pass: determine memory locations of label definitions: (LABEL)
     with open(file_name, 'r') as f:
         for command in f:  
-            pass
-    
-    
+            cmd = parse(command)
+            if cmd['instruction_type'] == 'C' or cmd['instruction_type'] == 'A':
+                cur_addr +=1 
+            elif cmd['instruction_type'] == 'L':
+                add_entry(cmd['value'],cur_addr)
+                
     # FIXME: Implement Pass 2 of assembler to generate the machine code from the intermediate data structure
     machine_code = []
-    
+    with open(file_name, 'r') as f:
+        for command in f:
+            cmd_1 = parse(str(command))
+            # print(command)
+            # print(cmd_1)
+            out_l = ''
+            if cmd_1['instruction_type'] == 'A':
+                out_l = '0'
+                if cmd_1['value_type'] == 'SYMBOL':
+                    if cmd_1['value'] in valid_symbol_table:
+                        var_addr = valid_symbol_table[cmd_1['value']]
+                        out_l = out_l + format(var_addr, 'b').zfill(15)
+                    else:
+                        valid_symbol_table[cmd_1['value']] = ram_addr
+                        out_l = out_l + format(ram_addr,'b').zfill(15)
+                        ram_addr += 1
+                elif cmd_1['value_type'] == 'NUMERIC':
+                    out_l = out_l + format(int(cmd_1['value']),'b').zfill(15)
+                machine_code.append(out_l)
+            elif cmd_1['instruction_type'] == 'C':
+                out_l = '111'
+                out_l = out_l + comp(cmd_1['comp']) + dest(cmd_1['dest']) + jump(cmd_1['jmp'])
+                machine_code.append(out_l)
+
     return machine_code
     
   
@@ -267,9 +352,3 @@ if __name__ == "__main__":
         else:
             print('Error generating machine code')
             
-        
-
-    
-    
-    
-    
