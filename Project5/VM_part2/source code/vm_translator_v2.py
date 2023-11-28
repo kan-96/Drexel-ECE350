@@ -350,6 +350,13 @@ def generate_if_goto_code(label):
     s = []
     
     # FIXME: complete implementation
+    s.append('// if-goto implementation')
+    s.append('@SP')
+    s.append('M=M-1')
+    s.append('A=M')
+    s.append('D=M')
+    s.append('@' + label )
+    s.append('D;JNE')
     
     return s
 
@@ -475,11 +482,16 @@ def generate_function_body_code(f, nvars):
     n: number of local variables declared within the function.
     """
     s = []
-    
+    s.append('// function [funtion_name] [nvars]')
     # FIXME: Generate the pseudo instruction -- the label
-    
+    generate_pseudo_instruction_code(f)
     # FIXME: Push nvars local variables into the stack, each intialized to zero
-    
+    s.append('// Push nvars local variables into the stack')
+    s.append('@SP')
+    s.append('A=M')
+    s.append('M=0')
+    s.append('@SP')
+    s.append('M=M+1 // push 0')
     return s
 
 
