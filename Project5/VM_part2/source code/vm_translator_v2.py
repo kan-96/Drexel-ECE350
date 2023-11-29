@@ -363,7 +363,7 @@ def generate_if_goto_code(label):
 def generate_goto_code(label):
     """Generate assembly code for goto."""
     s = []
-    s.append('// goto label')
+    s.append('// goto [label]')
     s.append('@' + label)
     s.append('0;JMP')
     
@@ -407,11 +407,11 @@ def generate_set_code(register, value):
 def generate_function_call_code(function, nargs, line_number):  
     """Generate preamble for function"""
     s = []
-    
+    temp_char = str(line_number)
     # FIXME: Push return address to stack
     s.append('// call function_name n_args')
     s.append('// Push return address to stack')
-    s.append('@' + function + '$ret.' + line_number)
+    s.append('@' + function + '$ret.' + temp_char)
     s.append('D=A')
     s.append('@SP')
     s.append('A=M')
@@ -472,7 +472,7 @@ def generate_function_call_code(function, nargs, line_number):
     generate_goto_code(function)
     # FIXME: Generate the pseudo-instruction/label corresponding to the return address
     s.append('// (return-address)')
-    s.append('('+ function + '$ret.' + line_number + ')')
+    s.append('('+ function + '$ret.' + temp_char + ')')
     
     return s
 
@@ -501,29 +501,71 @@ def generate_function_return_code():
     
     s.append('// Copy LCL to temp register R14 (FRAME)')
     # FIXME: Copy LCL to temp register R14 (FRAME)
-    
+    s.append('@LCL')
+    s.append('D=M')
+    s.append('@R14')
+    s.append('M=D // FRAME = LCL')
+    s.append('@5')
+    s.append('D=D-A')
+    s.append('A=D')
+    s.append('D=M')
     s.append('// Store return address in temp register R15 (RET)')
     # FIXME: Store return address in temp register R15 (RET)
-    
+    s.append('@R15')
+    s.append('M=D // RET = *(FRAME-5)')
     s.append('// Pop result from the working stack and move it to beginning of ARG segment')
     # FIXME: Pop result from the working stack and move it to beginning of ARG segment
+    s.append('@SP')
+    s.append('M=M-1')
+    s.append('A=M')
+    s.append('D=M')
+    s.append('@ARG')
+    s.append('A=M')
+    s.append('M=D')
     # FIXME: Adjust SP = ARG + 1
-    
-    
+    s.append('@ARG')
+    s.append('D=M+1')
+
     # FIXME: Restore THAT = *(FRAME - 1)
-    
-    
+    s.append('@SP')
+    s.append('M=D')
+    s.append('@R14')
+    s.append('D=M-1')
+    s.append('A=D')
+    s.append('D=M')
+    s.append('@THAT')
+    s.append('M=D')
     # FIXME: Restore THIS = *(FRAME - 2)
-   
-    
+    s.append('@2')
+    s.append('D=A')
+    s.append('@R14')
+    s.append('D=M-D')
+    s.append('A=D')
+    s.append('D=M')
+    s.append('@THIS')
+    s.append('M=D')
     # FIXME: Restore ARG = *(FRAME - 3)
-    
-    
+    s.append('@3')
+    s.append('D=A')
+    s.append('@R14')
+    s.append('D=M-D')
+    s.append('A=D')
+    s.append('D=M')
+    s.append('@ARG')
+    s.append('M=D')
     # FIXME: Restore LCL = *(FRAME - 4)
-    
-    
+    s.append('@4')
+    s.append('D=A')
+    s.append('@frame')
+    s.append('D=M-D')
+    s.append('A=D')
+    s.append('D=M')
+    s.append('@LCL')
+    s.append('M=D')
     # FIXME: Jump to return address stored in R15 back to the caller code
-   
+    s.append('@R15')
+    s.append('A=M')
+    s.append('0;JMP // goto RET')
     return s
 
 def translate_vm_commands(tokens, line_number):
@@ -574,12 +616,16 @@ def translate_vm_commands(tokens, line_number):
         print('translate_vm_commands: Unknown operation')           # Unknown operation 
     
     return s
-    
+file_name_global = ''
+def get_file_name(input_file):
+    return input_file
+
 def translate_file(input_file):
     """Translate VM file to Hack assembly code"""
     global line_number
     assembly_code = []
     assembly_code.append('// ' + input_file)
+    file_name_global = get_file_name(input_file)
     
     with open(input_file, 'r') as f:
         for command in f:        
@@ -592,6 +638,7 @@ def translate_file(input_file):
             if tokens[0] == '//':
                 continue                                        # Ignore comment       
             else:
+                
                 s = translate_vm_commands(tokens, line_number)
                 line_number = line_number + 1        
             if s:
@@ -732,7 +779,6 @@ if __name__ == "__main__":
         output_file = sys.argv[1]
         path = sys.argv[2]
         clean_old_files(path)
-        
         status = run_vm_to_asm_translator(path)
         if status == True:
             print('Intermediate assembly files were generated successfully');
