@@ -1,31 +1,27 @@
 // sys.vm
-// function [funtion_name] [nvars]
+// function init 0
+(init)
 // Push nvars local variables into the stack
-@SP
-A=M
-M=0
-@SP
-M=M+1 // push 0
 @256
 D=A
 @SP
 M=D
-// call function_name n_args
+// call main 0
 // Push return address to stack
-@main$ret.3
+@LABEL3
 D=A
 @SP
 A=M
 M=D
 @SP
 M=M+1
-// Push LCL
+// push LCL
 @LCL
 D=M
 @SP
 A=M
 M=D
-M=D
+@SP
 M=M+1
 // push ARG
 @ARG
@@ -51,7 +47,7 @@ A=M
 M=D
 @SP
 M=M+1
-// ARG = SP-n-5
+// ARG = SP-5-n
 @SP
 D=M
 @0
@@ -66,8 +62,11 @@ D=M
 @LCL
 M=D
 // Generate goto code
+// goto main
+@main
+0;JMP
 // (return-address)
-(main$ret.3)
+(LABEL3)
 (THATS_ALL_FOLKS)
 @THATS_ALL_FOLKS
 0;JMP

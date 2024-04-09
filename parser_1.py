@@ -1,4 +1,5 @@
 #remove all white space
+import re
 
 def remove_whitespace(command):
     """Remove all whitespace from a given command."""
@@ -82,6 +83,21 @@ valid_symbol_table = {'SP':0,
                 'KBD':24576
                 }
 
+def remove_last_char_if_newline(s):
+    # Using rstrip to remove trailing whitespace, including newline characters
+    return s.rstrip('\n')
+
+def remove_comments(line):
+    # Split the line based on '//', take the first part
+    return line.split('//')[0]
+
+def is_valid_symbol(symbol):
+    # Define a regular expression pattern for a valid symbol
+    pattern = re.compile(r'^[a-zA-Z_.$:][a-zA-Z0-9_.$:]*$')
+
+    # Check if the symbol matches the pattern
+    return bool(pattern.match(symbol))
+
 def parse(command):
     """Implements finite automate to scan assembly statements and parse them.
 
@@ -114,9 +130,14 @@ def parse(command):
     
     
     command = remove_whitespace(command)
+    command = remove_last_char_if_newline(command)
+    command = remove_comments(command)
+    
+    print(command)
     is_l_command = lambda i : i.find('(') != -1 and i.find(')') != -1    
     is_a_command = lambda i : i.find('@') != -1   
     is_c_command = lambda i : i.find("(") == -1 and i.find("@") == -1
+
     if is_a_command(command):
         s['instruction_type'] = 'A'
         if command.startswith('@'):
@@ -127,17 +148,15 @@ def parse(command):
                 s['dest'] = ''
                 s['comp'] = ''
                 s['jmp'] = ''
-            elif value[1].isalpha():
-                if (value.isalnum() or value in '_.$:') and all(char.islower() for char in value):
-                        s['value'] = value
-                        s['value_type'] = 'SYMBOL'
-                        s['dest'] = 'null'
-                        s['comp'] = ''
-                        s['jmp'] = 'null'
+            else:
+                if is_valid_symbol(value):
+                    s['value'] = value
+                    s['value_type'] = 'SYMBOL'
+                    s['dest'] = 'null'
+                    s['comp'] = ''
+                    s['jmp'] = 'null'
                 else:
                     s['status'] = -1
-            else:
-                s['status'] = -1
         else:
             s['status'] = -1
     elif is_c_command(command):
@@ -168,7 +187,10 @@ def parse(command):
         else:
             s['status'] = -1
     else:
-        s['status'] = -1
+        if command.startswidth('//') or command == '\n':
+            pass
+        else:
+            s['status'] = -1
     
     if s['status'] == -1:
         s['instruction_type'] = ''
@@ -198,57 +220,57 @@ def jump( j):
 def bits( n):
         return bin(int(n))[2:]
 
-def run_assembler(file_name):      
-    """Pass 1: Parse the assembly code into an intermediate data structure.
-    The intermediate data structure can be a list of elements, called ir, where 
-    each element is a dictionary with the following structure: 
+# def run_assembler(file_name):      
+#     """Pass 1: Parse the assembly code into an intermediate data structure.
+#     The intermediate data structure can be a list of elements, called ir, where 
+#     each element is a dictionary with the following structure: 
     
-    s['instruction_type'] = ''
-    s['value'] = ''
-    s['value_type'] = ''
-    s['dest'] = ''
-    s['comp'] = ''
-    s['jmp'] = ''
-    s['status'] = 0
+#     s['instruction_type'] = ''
+#     s['value'] = ''
+#     s['value_type'] = ''
+#     s['dest'] = ''
+#     s['comp'] = ''
+#     s['jmp'] = ''
+#     s['status'] = 0
     
-    The symbol table is also generated in this step.    
-    """
-    cur_addr = 0
-    ram_addr = 1024
-    # FIXME: Implement Pass 1 of the assembler to generate the intermediate data structure
-    # First pass: determine memory locations of label definitions: (LABEL)
-    with open(file_name, 'r') as f:
-        for command in f:  
-            cmd = parse(command)
-            if cmd['instruction_type'] == 'C' or cmd['instruction_type'] == 'A':
-                cur_addr +=1 
-            else:
-                add_entry(cmd['value'],cur_addr)
+#     The symbol table is also generated in this step.    
+#     """
+#     cur_addr = 0
+#     ram_addr = 1024
+#     # FIXME: Implement Pass 1 of the assembler to generate the intermediate data structure
+#     # First pass: determine memory locations of label definitions: (LABEL)
+#     with open(file_name, 'r') as f:
+#         for command in f:  
+#             cmd = parse(command)
+#             if cmd['instruction_type'] == 'C' or cmd['instruction_type'] == 'A':
+#                 cur_addr +=1 
+#             else:
+#                 add_entry(cmd['value'],cur_addr)
                 
-    # FIXME: Implement Pass 2 of assembler to generate the machine code from the intermediate data structure
-    machine_code = []
-    with open(file_name, 'r') as f:
-        for command in f:  
-            cmd_1 = parse(command)
-            out_l = ''
-            if cmd_1['instruction_type'] == 'A':
-                if cmd_1['value_type'] == 'SYMBOL':
-                    if cmd_1['value_type'] in valid_symbol_table:
-                        var_addr = valid_symbol_table[cmd_1['value']]
-                        out_l = out_l + format(var_addr, 'b').zfill(15)
-                    else:
-                        valid_symbol_table[cmd_1['value']] = ram_addr
-                        out_l = out_l + format(ram_addr,'b').zfill(15)
-                        ram_addr += 1
-                machine_code.append('0'+ out_l + '\n')
-            elif cmd_1['instruction_type'] == 'C':
-                out_l = dest(cmd_1['dest']) + comp(cmd_1['comp']) + jump(cmd_1['jmp'])
-                machine_code.append('111'+ out_l + '\n')
-            elif cmd_1['instruction_type'] == 'L':
-                pass
+#     # FIXME: Implement Pass 2 of assembler to generate the machine code from the intermediate data structure
+#     machine_code = []
+#     with open(file_name, 'r') as f:
+#         for command in f:  
+#             cmd_1 = parse(command)
+#             out_l = ''
+#             if cmd_1['instruction_type'] == 'A':
+#                 if cmd_1['value_type'] == 'SYMBOL':
+#                     if cmd_1['value_type'] in valid_symbol_table:
+#                         var_addr = valid_symbol_table[cmd_1['value']]
+#                         out_l = out_l + format(var_addr, 'b').zfill(15)
+#                     else:
+#                         valid_symbol_table[cmd_1['value']] = ram_addr
+#                         out_l = out_l + format(ram_addr,'b').zfill(15)
+#                         ram_addr += 1
+#                 machine_code.append('0'+ out_l + '\n')
+#             elif cmd_1['instruction_type'] == 'C':
+#                 out_l = dest(cmd_1['dest']) + comp(cmd_1['comp']) + jump(cmd_1['jmp'])
+#                 machine_code.append('111'+ out_l + '\n')
+#             elif cmd_1['instruction_type'] == 'L':
+#                 pass
 
     
-    return machine_code
+#     return machine_code
 
 # This function is designed for testing purposes
 def testing (command):
@@ -259,84 +281,121 @@ def testing (command):
     cur_addr = 124
     if cmd_1['instruction_type'] == 'C' or cmd_1['instruction_type'] == 'A':
         cur_addr +=1 
-    else:
+    if cmd_1['instruction_type'] == 'L':
         add_entry(cmd_1['value'],cur_addr)
         print(valid_symbol_table[cmd_1['value']])
     
     if cmd_1['instruction_type'] == 'A':
         out_l = '0'
         if cmd_1['value_type'] == 'SYMBOL':
-            if cmd_1['value_type'] in valid_symbol_table:
+            if cmd_1['value'] in valid_symbol_table:
                 var_addr = valid_symbol_table[cmd_1['value']]
                 out_l = out_l + format(var_addr, 'b').zfill(15)
             else:
                 valid_symbol_table[cmd_1['value']] = ram_addr
                 out_l = out_l + format(ram_addr,'b').zfill(15)
                 ram_addr += 1
-            machine_code.append(out_l + '\n')
+        elif cmd_1['value_type'] == 'NUMERIC':
+            out_l = out_l + format(int(cmd_1['value']),'b').zfill(15)
+        machine_code.append(out_l + '\n')
     elif cmd_1['instruction_type'] == 'C':
         out_l = '111'
         out_l = out_l + dest(cmd_1['dest']) + comp(cmd_1['comp']) + jump(cmd_1['jmp'])
         machine_code.append(out_l + '\n')
     print(machine_code)
-    return
+    return machine_code
 
 
-# Examples
-command1 = "@100"
-parsed1 = parse(command1)
-print(parsed1)
-testing(command1)
-# print(valid_comp_patterns['D+M'])
+# # Examples
+# command1 = "@100"
+# parsed1 = parse(command1)
+# print(parsed1)
+# testing(command1)
+# # print(valid_comp_patterns['D+M'])
 
-command2 = "@sum"
-parsed2 = parse(command2)
-print(parsed2)
-testing(command2)
-print(bits('1024'))
+# command2 = "@sum"
+# parsed2 = parse(command2)
+# print(parsed2)
+# testing(command2)
+# print(bits('1024'))
 
-command2_1 = "@sUm"
-parsed2_1 = parse(command2_1)
-print(parsed2_1)
+# command2_1 = "@sUm"
+# parsed2_1 = parse(command2_1)
+# print(parsed2_1)
 
-command3 = "Dw = D +w M"
-parsed3 = parse(command3)
-print(parsed3)
+# command3 = "Dw = D +w M"
+# parsed3 = parse(command3)
+# print(parsed3)
 
-instruction4 = "D;JGT"
-parsed4 = parse(instruction4)
-print(parsed4)
-testing(instruction4)
+# instruction4 = "D;JGT"
+# parsed4 = parse(instruction4)
+# print(parsed4)
+# testing(instruction4)
 
-instruction5 = "(SP)"
-parsed5 = parse(instruction5)
-print(parsed5)
-testing(instruction5)
-
-instruction5_1 = "(SPa)"
-parsed5_1 = parse(instruction5_1)
-print(parsed5_1)
+# instruction5 = "(SP)"
+# parsed5 = parse(instruction5)
+# print(parsed5)
 # testing(instruction5)
 
-instruction5_3 = "(ABC)"
-parsed5_3 = parse(instruction5_3)
-print(parsed5_3)
-testing(instruction5_3)
+# instruction5_1 = "(SPa)"
+# parsed5_1 = parse(instruction5_1)
+# print(parsed5_1)
+# # testing(instruction5)
+
+# instruction5_3 = "(ABC)"
+# parsed5_3 = parse(instruction5_3)
+# print(parsed5_3)
+# testing(instruction5_3)
 
 
 
-command6 = "1@sum"
-parsed6 = parse(command6)
-print(parsed6)
+# command6 = "1@sum"
+# parsed6 = parse(command6)
+# print(parsed6)
 
-command7 = "D = D + M;JMP"
-parsed7 = parse(command7)
-print(parsed7)
+# command7 = "D = D + M;JMP"
+# parsed7 = parse(command7)
+# print(parsed7)
 
-command8 = "D = D + M;ABC"
-parsed8 = parse(command8)
-print(parsed8)
+# command8 = "D = D + M;ABC"
+# parsed8 = parse(command8)
+# print(parsed8)
 
-command9 = "AD = D & M"
-parsed9 = parse(command9)
-print(parsed9)
+# command9 = "AD = D & M"
+# parsed9 = parse(command9)
+# print(parsed9)
+
+
+# command1 = '@2\n'
+# testing(command1)
+
+# command2 = 'D=A  //asdas'
+# testing(command2)
+
+# command3 = 'D=D+A'
+# testing(command3)
+
+# command4 = '@0'
+# testing(command4)
+
+# command5 = 'M=D'
+# testing(command5)
+
+# command6 = '@6i'
+# testing(command6)
+
+command7 = '@OUTPUT_FIRST'
+testing(command7)
+
+# print(parse(command1))
+# print(parse(command2))
+# print(parse(command3))
+# print(parse(command4))
+# print(parse(command5))
+# print(parse(command6))
+
+print(parse(command7))
+
+
+
+

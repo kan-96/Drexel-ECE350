@@ -1,11 +1,18 @@
 // mult.vm
-// function [funtion_name] [nvars]
+// function mult 2
+(mult)
 // Push nvars local variables into the stack
 @SP
 A=M
 M=0
 @SP
 M=M+1 // push 0
+@SP
+A=M
+M=0
+@SP
+M=M+1 // push 0
+// push constant 0
 @0
 D=A
 @SP
@@ -13,6 +20,7 @@ A=M
 M=D
 @SP
 M=M+1
+// pop local 0
 @LCL
 D=M
 @0
@@ -26,6 +34,7 @@ D=M
 @13
 A=M
 M=D
+// push argument 1
 @ARG
 D=M
 @1
@@ -37,6 +46,7 @@ A=M
 M=D
 @SP
 M=M+1
+// pop local 1
 @LCL
 D=M
 @1
@@ -51,6 +61,7 @@ D=M
 A=M
 M=D
 (LOOP)
+// push constant 0
 @0
 D=A
 @SP
@@ -58,6 +69,7 @@ A=M
 M=D
 @SP
 M=M+1
+// push local 1
 @LCL
 D=M
 @1
@@ -100,6 +112,7 @@ A=M
 D=M
 @END
 D;JNE
+// push local 0
 @LCL
 D=M
 @0
@@ -111,6 +124,7 @@ A=M
 M=D
 @SP
 M=M+1
+// push argument 0
 @ARG
 D=M
 @0
@@ -129,6 +143,7 @@ D=M
 A=A-1
 D=D+M
 M=D
+// pop local 0
 @LCL
 D=M
 @0
@@ -142,6 +157,7 @@ D=M
 @13
 A=M
 M=D
+// push local 1
 @LCL
 D=M
 @1
@@ -153,6 +169,7 @@ A=M
 M=D
 @SP
 M=M+1
+// push constant 1
 @1
 D=A
 @SP
@@ -167,6 +184,7 @@ D=M
 A=A-1
 D=M-D
 M=D
+// pop local 1
 @LCL
 D=M
 @1
@@ -180,10 +198,11 @@ D=M
 @13
 A=M
 M=D
-// goto label
+// goto [label]
 @LOOP
 0;JMP
 (END)
+// push local 0
 @LCL
 D=M
 @0
@@ -243,7 +262,7 @@ D=M
 M=D
 @4
 D=A
-@frame
+@R14
 D=M-D
 A=D
 D=M

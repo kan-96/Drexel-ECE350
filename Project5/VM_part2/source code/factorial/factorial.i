@@ -1,6 +1,6 @@
-// main.vm
-// function main 2
-(main)
+// factorial.vm
+// function factorial 2
+(factorial)
 // Push nvars local variables into the stack
 @SP
 A=M
@@ -12,8 +12,8 @@ A=M
 M=0
 @SP
 M=M+1 // push 0
-// push constant 5
-@5
+// push constant 1
+@1
 D=A
 @SP
 A=M
@@ -34,8 +34,8 @@ D=M
 @13
 A=M
 M=D
-// push constant 10
-@10
+// push constant 1
+@1
 D=A
 @SP
 A=M
@@ -56,6 +56,103 @@ D=M
 @13
 A=M
 M=D
+(FACTORIAL_LOOP)
+// push local 1
+@LCL
+D=M
+@1
+D=D+A
+A=D
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// push constant 1
+@1
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@SP
+M=M-1
+A=M
+D=M
+A=A-1
+D=D+M
+M=D
+// pop local 1
+@LCL
+D=M
+@1
+D=D+A
+@13
+M=D
+@SP
+M=M-1
+A=M
+D=M
+@13
+A=M
+M=D
+// push local 1
+@LCL
+D=M
+@1
+D=D+A
+A=D
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// push argument 0
+@ARG
+D=M
+@0
+D=D+A
+A=D
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@SP
+M=M-1
+A=M
+D=M
+@SP
+M=M-1
+A=M
+D=M-D
+@IF_GT_21
+D;JGT
+@SP
+A=M
+M=0
+@SP
+M=M+1
+@END_IF_ELSE_21
+0;JMP
+(IF_GT_21)
+@SP
+A=M
+M=-1
+@SP
+M=M+1
+(END_IF_ELSE_21)
+// if-goto implementation
+@SP
+M=M-1
+A=M
+D=M
+@FACTORIAL_LOOP_END
+D;JNE
 // push local 0
 @LCL
 D=M
@@ -80,9 +177,9 @@ A=M
 M=D
 @SP
 M=M+1
-// call add 2
+// call mult 2
 // Push return address to stack
-@LABEL12
+@LABEL25
 D=A
 @SP
 A=M
@@ -136,11 +233,41 @@ D=M
 @LCL
 M=D
 // Generate goto code
-// goto add
-@add
+// goto mult
+@mult
 0;JMP
 // (return-address)
-(LABEL12)
+(LABEL25)
+// pop local 0
+@LCL
+D=M
+@0
+D=D+A
+@13
+M=D
+@SP
+M=M-1
+A=M
+D=M
+@13
+A=M
+M=D
+// goto [label]
+@FACTORIAL_LOOP
+0;JMP
+(FACTORIAL_LOOP_END)
+// push local 0
+@LCL
+D=M
+@0
+D=D+A
+A=D
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
 // Copy LCL to temp register R14 (FRAME)
 @LCL
 D=M

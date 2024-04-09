@@ -1,6 +1,6 @@
-// main.vm
-// function main 2
-(main)
+// add.vm
+// function add 2
+(add)
 // Push nvars local variables into the stack
 @SP
 A=M
@@ -12,9 +12,13 @@ A=M
 M=0
 @SP
 M=M+1 // push 0
-// push constant 5
-@5
-D=A
+// push argument 0
+@ARG
+D=M
+@0
+D=D+A
+A=D
+D=M
 @SP
 A=M
 M=D
@@ -34,9 +38,13 @@ D=M
 @13
 A=M
 M=D
-// push constant 10
-@10
-D=A
+// push argument 1
+@ARG
+D=M
+@1
+D=D+A
+A=D
+D=M
 @SP
 A=M
 M=D
@@ -80,67 +88,13 @@ A=M
 M=D
 @SP
 M=M+1
-// call add 2
-// Push return address to stack
-@LABEL12
-D=A
 @SP
+M=M-1
 A=M
-M=D
-@SP
-M=M+1
-// push LCL
-@LCL
 D=M
-@SP
-A=M
+A=A-1
+D=D+M
 M=D
-@SP
-M=M+1
-// push ARG
-@ARG
-D=M
-@SP
-A=M
-M=D
-@SP
-M=M+1
-// push THIS
-@THIS
-D=M
-@SP
-A=M
-M=D
-@SP
-M=M+1
-// push THAT
-@THAT
-D=M
-@SP
-A=M
-M=D
-@SP
-M=M+1
-// ARG = SP-5-n
-@SP
-D=M
-@2
-D=D-A
-@5
-D=D-A
-@ARG
-M=D
-// Set LCL register to current SP
-@SP
-D=M
-@LCL
-M=D
-// Generate goto code
-// goto add
-@add
-0;JMP
-// (return-address)
-(LABEL12)
 // Copy LCL to temp register R14 (FRAME)
 @LCL
 D=M

@@ -58,11 +58,11 @@ def load_index_pop(s,index):
     s.append(comp)
     
 # Global variable of file Name
-file_name = ''
+# file_name = ''
 # get name and save to global variable
 def get_file_name(name):
     return name
-file_name = get_file_name('abc.vm')
+
     
 def generate_push_code(segment, index):
     """Generate assembly code to push value into the stack.
@@ -226,6 +226,69 @@ def generate_unary_operation_code(operation):
         c_command(s,'M','!M') 
         return s
     return s
+global file_name
+file_name = get_file_name('abc.vm')
+def push_registers_to_stack(s,label):
+    s.append('@' + label)
+    s.append('D=M')
+    s.append('@SP')
+    s.append('A=M')
+    s.append('M=D')
+    s.append('@SP')
+    s.append('M=M+1')
+
+def generate_goto_code(label):
+    """Generate assembly code for goto."""
+    s = []
+    s.append('// goto [label]')
+    s.append('@' + label)
+    s.append('0;JMP')
+    
+    # FIXME
+    
+    return s
+    
+def generate_function_call_code(function, nargs, line_number):  
+    """Generate preamble for function"""
+    s = []
+    temp_char = str(line_number)
+    # FIXME: Push return address to stack
+    s.append('// call function_name n_args')
+    s.append('// Push return address to stack')
+    s+=(generate_push_code('constant',temp_char))
+    # FIXME: Push LCL, ARG, THIS, and THAT registers to stack
+    s.append('// push LCL')
+    push_registers_to_stack(s,'LCL')
+    s.append('// push ARG')
+    push_registers_to_stack(s,'ARG')
+    s.append('// push THIS')
+    push_registers_to_stack(s,'THIS')
+    s.append('// push THAT')
+    push_registers_to_stack(s,'THAT')
+    # FIXME: Set ARG register to point to start of arguments in the current frame
+    s.append('// ARG = SP-5-n')
+    s.append('@SP')
+    s.append('D=M')
+    s.append('@' + nargs)
+    s.append('D=D-A')
+    s.append('@5')
+    s.append('D=D-A')
+    s.append('@ARG')
+    s.append('M=D')
+    # FIXME: Set LCL register to current SP
+    s.append('// Set LCL register to current SP')
+    s.append('@SP')
+    s.append('D=M')
+    s.append('@LCL')
+    s.append('M=D')
+    # FIXME: Generate goto code to jump to function 
+    s.append('// Generate goto code')
+    s += (generate_goto_code(function))
+    # FIXME: Generate the pseudo-instruction/label corresponding to the return address
+    s.append('//return-address')
+    s.append('('+ temp_char + ')')
+    
+    return s
 s=[]
 # s += generate_push_code('constant', '3040')
 # s += '/'
@@ -236,8 +299,13 @@ s=[]
 # s += generate_push_code('argument', '1')
 # s += '/'
 # s += generate_push_code('static', '6')
-s += generate_pop_code('local','2')
-s += '/'
-for i in s:
-    print(i)
+# s += generate_pop_code('local','2')
+s += generate_function_call_code('call','2',2)
+
+# s += '/'
+# temp_char = str(5)
+# print(generate_push_code('constant',temp_char))
+
+for i in range(100):
+    print('xin loi')
 

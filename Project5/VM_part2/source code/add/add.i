@@ -1,11 +1,18 @@
 // add.vm
-// function [funtion_name] [nvars]
+// function add 2
+(add)
 // Push nvars local variables into the stack
 @SP
 A=M
 M=0
 @SP
 M=M+1 // push 0
+@SP
+A=M
+M=0
+@SP
+M=M+1 // push 0
+// push argument 0
 @ARG
 D=M
 @0
@@ -17,6 +24,7 @@ A=M
 M=D
 @SP
 M=M+1
+// push argument 1
 @ARG
 D=M
 @1
@@ -83,7 +91,7 @@ D=M
 M=D
 @4
 D=A
-@frame
+@R14
 D=M-D
 A=D
 D=M

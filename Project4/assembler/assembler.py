@@ -292,7 +292,7 @@ def run_assembler(file_name):
     The symbol table is also generated in this step.    
     """
     cur_addr = 0
-    ram_addr = 1024
+    ram_addr = 16
     # FIXME: Implement Pass 1 of the assembler to generate the intermediate data structure
     # First pass: determine memory locations of label definitions: (LABEL)
     with open(file_name, 'r') as f:

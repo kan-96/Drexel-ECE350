@@ -1,6 +1,6 @@
-// main.vm
-// function main 2
-(main)
+// mult.vm
+// function mult 2
+(mult)
 // Push nvars local variables into the stack
 @SP
 A=M
@@ -12,8 +12,8 @@ A=M
 M=0
 @SP
 M=M+1 // push 0
-// push constant 5
-@5
+// push constant 0
+@0
 D=A
 @SP
 A=M
@@ -34,9 +34,13 @@ D=M
 @13
 A=M
 M=D
-// push constant 10
-@10
-D=A
+// push argument 1
+@ARG
+D=M
+@1
+D=D+A
+A=D
+D=M
 @SP
 A=M
 M=D
@@ -56,13 +60,10 @@ D=M
 @13
 A=M
 M=D
-// push local 0
-@LCL
-D=M
+(LOOP)
+// push constant 0
 @0
-D=D+A
-A=D
-D=M
+D=A
 @SP
 A=M
 M=D
@@ -80,67 +81,139 @@ A=M
 M=D
 @SP
 M=M+1
-// call add 2
-// Push return address to stack
-@LABEL12
+@SP
+M=M-1
+A=M
+D=M
+@SP
+M=M-1
+A=M
+D=M-D
+@IF_EQ_39
+D;JEQ
+@SP
+A=M
+M=0
+@SP
+M=M+1
+@END_IF_ELSE_39
+0;JMP
+(IF_EQ_39)
+@SP
+A=M
+M=-1
+@SP
+M=M+1
+(END_IF_ELSE_39)
+// if-goto implementation
+@SP
+M=M-1
+A=M
+D=M
+@END
+D;JNE
+// push local 0
+@LCL
+D=M
+@0
+D=D+A
+A=D
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// push argument 0
+@ARG
+D=M
+@0
+D=D+A
+A=D
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@SP
+M=M-1
+A=M
+D=M
+A=A-1
+D=D+M
+M=D
+// pop local 0
+@LCL
+D=M
+@0
+D=D+A
+@13
+M=D
+@SP
+M=M-1
+A=M
+D=M
+@13
+A=M
+M=D
+// push local 1
+@LCL
+D=M
+@1
+D=D+A
+A=D
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// push constant 1
+@1
 D=A
 @SP
 A=M
 M=D
 @SP
 M=M+1
-// push LCL
+@SP
+M=M-1
+A=M
+D=M
+A=A-1
+D=M-D
+M=D
+// pop local 1
 @LCL
 D=M
+@1
+D=D+A
+@13
+M=D
 @SP
+M=M-1
+A=M
+D=M
+@13
 A=M
 M=D
-@SP
-M=M+1
-// push ARG
-@ARG
-D=M
-@SP
-A=M
-M=D
-@SP
-M=M+1
-// push THIS
-@THIS
-D=M
-@SP
-A=M
-M=D
-@SP
-M=M+1
-// push THAT
-@THAT
-D=M
-@SP
-A=M
-M=D
-@SP
-M=M+1
-// ARG = SP-5-n
-@SP
-D=M
-@2
-D=D-A
-@5
-D=D-A
-@ARG
-M=D
-// Set LCL register to current SP
-@SP
-D=M
-@LCL
-M=D
-// Generate goto code
-// goto add
-@add
+// goto [label]
+@LOOP
 0;JMP
-// (return-address)
-(LABEL12)
+(END)
+// push local 0
+@LCL
+D=M
+@0
+D=D+A
+A=D
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
 // Copy LCL to temp register R14 (FRAME)
 @LCL
 D=M

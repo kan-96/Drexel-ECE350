@@ -1,11 +1,18 @@
 // main.vm
-// function [funtion_name] [nvars]
+// function main 2
+(main)
 // Push nvars local variables into the stack
 @SP
 A=M
 M=0
 @SP
 M=M+1 // push 0
+@SP
+A=M
+M=0
+@SP
+M=M+1 // push 0
+// push constant 10
 @10
 D=A
 @SP
@@ -13,6 +20,7 @@ A=M
 M=D
 @SP
 M=M+1
+// pop local 0
 @LCL
 D=M
 @0
@@ -26,6 +34,7 @@ D=M
 @13
 A=M
 M=D
+// push constant 5
 @5
 D=A
 @SP
@@ -33,6 +42,7 @@ A=M
 M=D
 @SP
 M=M+1
+// pop local 1
 @LCL
 D=M
 @1
@@ -46,6 +56,7 @@ D=M
 @13
 A=M
 M=D
+// push local 0
 @LCL
 D=M
 @0
@@ -57,6 +68,7 @@ A=M
 M=D
 @SP
 M=M+1
+// push local 1
 @LCL
 D=M
 @1
@@ -68,22 +80,22 @@ A=M
 M=D
 @SP
 M=M+1
-// call function_name n_args
+// call mult 2
 // Push return address to stack
-@mult$ret.12
+@LABEL12
 D=A
 @SP
 A=M
 M=D
 @SP
 M=M+1
-// Push LCL
+// push LCL
 @LCL
 D=M
 @SP
 A=M
 M=D
-M=D
+@SP
 M=M+1
 // push ARG
 @ARG
@@ -109,7 +121,7 @@ A=M
 M=D
 @SP
 M=M+1
-// ARG = SP-n-5
+// ARG = SP-5-n
 @SP
 D=M
 @2
@@ -124,8 +136,11 @@ D=M
 @LCL
 M=D
 // Generate goto code
+// goto mult
+@mult
+0;JMP
 // (return-address)
-(mult$ret.12)
+(LABEL12)
 // Copy LCL to temp register R14 (FRAME)
 @LCL
 D=M
@@ -174,7 +189,7 @@ D=M
 M=D
 @4
 D=A
-@frame
+@R14
 D=M-D
 A=D
 D=M

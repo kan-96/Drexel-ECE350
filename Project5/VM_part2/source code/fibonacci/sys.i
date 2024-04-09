@@ -67,6 +67,7 @@ M=D
 0;JMP
 // (return-address)
 (LABEL3)
-(THATS_ALL_FOLKS)
-@THATS_ALL_FOLKS
+(WHILE)
+// goto [label]
+@WHILE
 0;JMP
